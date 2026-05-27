@@ -9,10 +9,10 @@ FIXTURES = Path(__file__).parent / "fixtures"
 def test_extract_eval_entries():
     text = (FIXTURES / "sample_eval.md").read_text(encoding="utf-8")
     entries = extract_eval_entries(text)
-    urls = {e.repo for e in entries}
-    assert "Hello-World" in urls
-    assert "Spoon-Knife" in urls
-    assert "gitignore" in urls
+    by_repo = {e.repo: e for e in entries}
+    assert by_repo["Hello-World"].claimed_license == "MIT"
+    assert by_repo["Spoon-Knife"].claimed_license == "NONE"
+    assert by_repo["gitignore"].claimed_license == "Apache-2.0"
 
 
 def test_compare_licenses_match():

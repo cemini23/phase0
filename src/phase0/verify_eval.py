@@ -26,16 +26,52 @@ LICENSE_IN_TEXT_RE = re.compile(
 )
 
 
+VERDICT_WORDS = frozenset(
+    {
+        "adopt",
+        "reject",
+        "reference",
+        "defer",
+        "steal-from",
+        "steal from",
+        "unavailable",
+        "go",
+        "no-go",
+        "conditional-go",
+    }
+)
+
+
+def _license_from_table_row(line: str) -> str | None:
+    if "|" not in line or "github.com" not in line:
+        return None
+    cells = [c.strip() for c in line.split("|") if c.strip()]
+    try:
+        url_idx = next(i for i, c in enumerate(cells) if "github.com" in c)
+    except StopIteration:
+        return None
+    for idx in (url_idx - 1, url_idx + 1, url_idx - 2, url_idx + 2):
+        if idx < 0 or idx >= len(cells):
+            continue
+        cell = cells[idx]
+        if "github.com" in cell or cell.isdigit():
+            continue
+        if cell.lower() in VERDICT_WORDS:
+            continue
+        norm = normalize_license(cell)
+        if norm and norm not in {"UNAVAILABLE", "UNKNOWN"}:
+            return norm
+        lower = cell.lower()
+        if any(m in lower for m in NO_LICENSE_MARKERS):
+            return "NONE"
+    return None
+
+
 def _claimed_from_context(snippet: str) -> str:
-    if "|" in snippet:
-        cells = [c.strip() for c in snippet.split("|") if c.strip()]
-        for cell in reversed(cells):
-            norm = normalize_license(cell)
-            if norm and norm not in {"UNAVAILABLE", "UNKNOWN"}:
-                return norm
-            lower = cell.lower()
-            if any(m in lower for m in NO_LICENSE_MARKERS):
-                return "NONE"
+    for line in snippet.splitlines():
+        lic = _license_from_table_row(line)
+        if lic:
+            return lic
     m = LICENSE_IN_TEXT_RE.search(snippet)
     if m:
         return normalize_license(m.group(0)) or m.group(0)
@@ -53,7 +89,7 @@ def extract_eval_entries(text: str) -> list[EvalEntry]:
             if key in seen:
                 continue
             seen.add(key)
-            window = "\n".join(lines[max(0, i - 1) : min(len(lines), i + 2)])
+            window = line
             claimed = _claimed_from_context(window)
             entries.append(
                 EvalEntry(

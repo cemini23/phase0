@@ -1,41 +1,79 @@
 # phase0
 
-CLI for **third-party tool adoption audits** — the second gate after doc-level evaluation.
+Phase-0 **source audits** for third-party agent tools — the second gate after doc-level LLM evaluation.
 
-> **Status:** Planned. [vet](https://github.com/cemini23/vet) ships first.
+Requires [GitHub CLI](https://cli.github.com/) (`gh`) authenticated (`gh auth login`). Stdlib-only Python; clones are shallow and ephemeral.
 
-## Problem
+Companion: [vet](https://github.com/cemini23/vet) audits **your** skills and briefs before they ship. phase0 audits **their** repos before you adopt them.
 
-LLM-generated tool evaluations systematically mis-report licenses, maturity, and fit. Doc-level "Adopt" verdicts fail Phase-0 source audits at high rates when someone actually clones the repo.
-
-## Planned interface
+## Install
 
 ```bash
-phase0 audit https://github.com/org/repo --class mcp-server
-phase0 audit https://github.com/org/repo --class skill-library
-phase0 verify-eval eval.md          # re-check license claims via gh api
+pip install git+https://github.com/cemini23/phase0.git
+# or from clone:
+pip install -e .
 ```
+
+## Commands
+
+### verify-eval — catch false license claims in eval docs
+
+```bash
+phase0 verify-eval tool-eval.md
+phase0 verify-eval eval.md --json
+```
+
+Parses `github.com/owner/repo` URLs, reads claimed licenses from table rows / nearby prose, then verifies via `gh api` + optional shallow `LICENSE` file read.
+
+Exit codes: `0` all match, `1` warnings, `2` mismatches, `3` error.
+
+### audit — Phase-0 checklist on a live repo
+
+```bash
+phase0 audit https://github.com/org/mcp-server --class mcp-server
+phase0 audit https://github.com/org/skills --class skill-library
+phase0 audit URL --class oauth-proxy --no-clone   # API-only, faster
+```
+
+**Tool classes:**
+
+| Class | Checks |
+|-------|--------|
+| `mcp-server` | MCP surface patterns, readOnly/destructive annotations |
+| `skill-library` | SKILL.md presence, frontmatter |
+| `wiki-tool` | Hardcoded `wiki/` path literals |
+| `oauth-proxy` | Credential/OAuth grafting patterns (fail) |
+| `trading-bot` | Generic engineering only (manifest, tests/) — **no strategy review** |
+
+**Verdicts:** `GO` · `CONDITIONAL-GO` (warnings) · `NO-GO` (fail) · `ERROR`
 
 ## Two-gate pattern
 
-| Gate | Cost | Catches |
+| Gate | Tool | Catches |
 |------|------|---------|
-| Doc-level eval | ~5 min / URL | Stack fit, coarse license field |
-| Phase-0 source audit | ~30–60 min / URL | Parallel implementations, TOS chains, OAuth grafting, GPL poison, star inflation, hardcoded layouts |
+| Doc-level eval | (human / LLM) | Stack fit, coarse license field |
+| Phase-0 | **phase0** | False NO-LICENSE, OAuth grafting, missing LICENSE file, hardcoded wiki layouts, star inflation |
 
-## Tool classes (planned)
+## Example workflow
 
-- `mcp-server` — schema surface, destructive annotations, auth patterns
-- `skill-library` — SKILL.md injection risk, catalog churn, license files
-- `wiki-tool` — hardcoded directory layouts, nested-wiki support
-- `oauth-proxy` — credential file reads, undocumented token endpoints
-- `trading-bot` — generic engineering checks only (no strategy IP)
+```bash
+# 1. Vet your adoption brief before writing the eval handoff
+vet briefs/adopt-foo.md --strict
 
-## Related
+# 2. Skeptic-check the eval's license column
+phase0 verify-eval inbox/tool-eval-v4.md
 
-- [vet](https://github.com/cemini23/vet) — static audit for skills and briefs (available now)
-- [OSS roadmap](https://github.com/cemini23/vet#related) — full agent toolkit sequence
+# 3. Phase-0 the one Adopt candidate
+phase0 audit https://github.com/org/foo --class mcp-server
+```
+
+## Prerequisites
+
+```bash
+gh auth status   # must be logged in
+git --version    # used for shallow clones
+```
 
 ## License
 
-MIT (will match `vet` on first release)
+MIT — see [LICENSE](LICENSE).

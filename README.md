@@ -1,5 +1,8 @@
 # phase0
 
+[![CI](https://github.com/cemini23/phase0/actions/workflows/ci.yml/badge.svg)](https://github.com/cemini23/phase0/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Phase-0 **source audits** for third-party agent tools — the second gate after doc-level LLM evaluation.
 
 Part of the [agent toolkit](https://github.com/cemini23/agent-toolkit-demo): **vet** → **phase0** → **wikilint**.

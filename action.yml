@@ -1,0 +1,49 @@
+name: phase0
+description: Phase-0 source audit for third-party agent tools (requires gh CLI)
+branding:
+  icon: search
+  color: purple
+
+inputs:
+  command:
+    description: Subcommand — audit or verify-eval
+    required: true
+  target:
+    description: GitHub repo URL (audit) or eval markdown path (verify-eval)
+    required: true
+  tool-class:
+    description: Tool class for audit (mcp-server, skill-library, wiki-tool, oauth-proxy, trading-bot)
+    required: false
+    default: mcp-server
+  no-clone:
+    description: Skip git clone on audit (API-only)
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Install phase0 from action ref
+      shell: bash
+      run: pip install "${{ github.action_path }}"
+    - name: Run phase0
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        if [ "${{ inputs.command }}" = "audit" ]; then
+          ARGS=( audit "${{ inputs.target }}" --class "${{ inputs.tool-class }}" )
+          if [ "${{ inputs.no-clone }}" = "true" ]; then
+            ARGS+=( --no-clone )
+          fi
+          phase0 "${ARGS[@]}"
+        elif [ "${{ inputs.command }}" = "verify-eval" ]; then
+          phase0 verify-eval "${{ inputs.target }}"
+        else
+          echo "Unknown command: ${{ inputs.command }}" >&2
+          exit 3
+        fi

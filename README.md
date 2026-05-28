@@ -2,78 +2,69 @@
 
 Phase-0 **source audits** for third-party agent tools — the second gate after doc-level LLM evaluation.
 
-Requires [GitHub CLI](https://cli.github.com/) (`gh`) authenticated (`gh auth login`). Stdlib-only Python; clones are shallow and ephemeral.
+Part of the [agent toolkit](https://github.com/cemini23/agent-toolkit-demo): **vet** → **phase0** → **wikilint**.
 
-Companion: [vet](https://github.com/cemini23/vet) audits **your** skills and briefs before they ship. phase0 audits **their** repos before you adopt them.
+Requires [GitHub CLI](https://cli.github.com/) (`gh auth login`) and `git`. Stdlib-only Python.
 
 ## Install
 
 ```bash
 pip install git+https://github.com/cemini23/phase0.git
-# or from clone:
 pip install -e .
 ```
 
 ## Commands
 
-### verify-eval — catch false license claims in eval docs
-
 ```bash
+# Skeptic-check license column in an eval doc
 phase0 verify-eval tool-eval.md
-phase0 verify-eval eval.md --json
+
+# Phase-0 audit before adoption
+phase0 audit https://github.com/org/repo --class mcp-server
+phase0 audit URL --class oauth-proxy --no-clone
 ```
 
-Parses `github.com/owner/repo` URLs, reads claimed licenses from table rows / nearby prose, then verifies via `gh api` + optional shallow `LICENSE` file read.
+### Tool classes
 
-Exit codes: `0` all match, `1` warnings, `2` mismatches, `3` error.
+`mcp-server` · `skill-library` · `wiki-tool` · `oauth-proxy` · `trading-bot` (engineering only)
 
-### audit — Phase-0 checklist on a live repo
+### Verdicts
 
-```bash
-phase0 audit https://github.com/org/mcp-server --class mcp-server
-phase0 audit https://github.com/org/skills --class skill-library
-phase0 audit URL --class oauth-proxy --no-clone   # API-only, faster
+`GO` · `CONDITIONAL-GO` · `NO-GO` · `ERROR`
+
+## GitHub Action
+
+```yaml
+- uses: actions/checkout@v4
+- uses: cemini23/phase0@v0.2.0
+  with:
+    command: verify-eval
+    target: evals/tool-eval.md
 ```
 
-**Tool classes:**
+Audit mode:
 
-| Class | Checks |
-|-------|--------|
-| `mcp-server` | MCP surface patterns, readOnly/destructive annotations |
-| `skill-library` | SKILL.md presence, frontmatter |
-| `wiki-tool` | Hardcoded `wiki/` path literals |
-| `oauth-proxy` | Credential/OAuth grafting patterns (fail) |
-| `trading-bot` | Generic engineering only (manifest, tests/) — **no strategy review** |
+```yaml
+- uses: cemini23/phase0@v0.2.0
+  with:
+    command: audit
+    target: https://github.com/org/mcp-server
+    tool-class: mcp-server
+```
 
-**Verdicts:** `GO` · `CONDITIONAL-GO` (warnings) · `NO-GO` (fail) · `ERROR`
+Uses `github.token` for `gh api` in Actions.
 
 ## Two-gate pattern
 
 | Gate | Tool | Catches |
 |------|------|---------|
-| Doc-level eval | (human / LLM) | Stack fit, coarse license field |
-| Phase-0 | **phase0** | False NO-LICENSE, OAuth grafting, missing LICENSE file, hardcoded wiki layouts, star inflation |
+| Doc-level eval | human / LLM | Stack fit, coarse license |
+| Phase-0 | **phase0** | False NO-LICENSE, OAuth grafting, missing LICENSE, hardcoded layouts |
 
-## Example workflow
+## Related
 
-```bash
-# 1. Vet your adoption brief before writing the eval handoff
-vet briefs/adopt-foo.md --strict
-
-# 2. Skeptic-check the eval's license column
-phase0 verify-eval inbox/tool-eval-v4.md
-
-# 3. Phase-0 the one Adopt candidate
-phase0 audit https://github.com/org/foo --class mcp-server
-```
-
-## Prerequisites
-
-```bash
-gh auth status   # must be logged in
-git --version    # used for shallow clones
-```
+- [vet](https://github.com/cemini23/vet) · [wikilint](https://github.com/cemini23/wikilint) · [demo](https://github.com/cemini23/agent-toolkit-demo)
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT

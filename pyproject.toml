@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "phase0"
-version = "0.1.0"
+version = "0.2.0"
 description = "Phase-0 source audits for third-party agent tools and eval license verification"
 readme = "README.md"
 license = "MIT"

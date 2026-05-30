@@ -66,7 +66,9 @@ Uses `github.token` for `gh api` in Actions.
 
 ## Related
 
-- [vet](https://github.com/cemini23/vet) · [wikilint](https://github.com/cemini23/wikilint) · [demo](https://github.com/cemini23/agent-toolkit-demo)
+- Methodology newsletter: [Outlier Weekly](https://outlierweekly.substack.com)
+- Agent meta-wiki: [cemini-claude-code-CCC](https://github.com/cemini23/cemini-claude-code-CCC)
+- Toolkit: [vet](https://github.com/cemini23/vet) · [wikilint](https://github.com/cemini23/wikilint) · [agent-toolkit-demo](https://github.com/cemini23/agent-toolkit-demo) · [ara-schema](https://github.com/cemini23/ara-schema)
 
 ## License
 
